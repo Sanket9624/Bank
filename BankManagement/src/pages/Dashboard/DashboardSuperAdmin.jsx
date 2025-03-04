@@ -6,10 +6,9 @@ import {
   deleteRole,
   createUser,
   getAllBankManagers,
-  updateManager,
+  getAllUsers,
   updateUser,
   deleteUser,
-  getAllUsers,
 } from "../../services/adminService";
 import { fetchUserDetails } from "../../services/authService";
 
@@ -19,7 +18,6 @@ const DashboardSuperAdmin = () => {
   const [roles, setRoles] = useState([]);
   const [newRole, setNewRole] = useState("");
   const [bankManagers, setBankManagers] = useState([]);
-  const [editManager, setEditManager] = useState(null);
   const [users, setUsers] = useState([]);
   const [editUser, setEditUser] = useState(null);
   const [newUser, setNewUser] = useState({
@@ -30,7 +28,7 @@ const DashboardSuperAdmin = () => {
     mobileNo: "",
     address: "",
     dateOfBirth: "",
-    roleName: "",
+    roleId: "",
   });
 
   useEffect(() => {
@@ -56,7 +54,13 @@ const DashboardSuperAdmin = () => {
     try {
       await createRole(newRole, token);
       alert("Role Created Successfully");
-      setRoles(await getAllRoles(token));
+      const allRoles = await getAllRoles(token);
+      const filteredRoles = allRoles.filter(
+        (role) => role.roleName !== "SuperAdmin" && role.roleName !== "Customer"
+      );
+  
+      // Update the state with filtered roles
+      setRoles(filteredRoles);
       setNewRole("");
     } catch (error) {
       console.error("Failed to create role:", error);
@@ -88,27 +92,17 @@ const DashboardSuperAdmin = () => {
         mobileNo: "",
         address: "",
         dateOfBirth: "",
-        roleName: "",
+        roleId: 2,
       });
     } catch (error) {
       console.error("Failed to create user:", error);
     }
   };
-  const handleUpdateManager = async (userId, updatedData) => {
-    try {
-      await updateUser(userId, updatedData, token);
-      alert("Manager Updated Successfully");
-      setBankManagers(await getAllBankManagers(token));
-    } catch (error) {
-      console.error("Failed to update user:", error);
-    }
-  };
-
 
   // Update User Details
-  const handleUpdateUser = async (userId, updatedData) => {
+  const handleUpdateUser = async (userId, userData) => {
     try {
-      await updateUser(userId, updatedData, token);
+      await updateUser(userId, userData, token);
       alert("User Updated Successfully");
       setBankManagers(await getAllUsers(token));
     } catch (error) {
@@ -202,11 +196,20 @@ const DashboardSuperAdmin = () => {
     onChange={(e) => setNewUser({ ...newUser, dateOfBirth: e.target.value })} 
     className="border p-2 w-full mb-2 rounded" />
 
-  <select value={newUser.roleName} onChange={(e) => setNewUser({ ...newUser, roleName: e.target.value })} 
-    className="border p-2 w-full mb-2 rounded">
-    <option value="">Select Role</option>
-    {roles.map((role) => <option key={role.roleId} value={role.roleName}>{role.roleName}</option>)}
-  </select>
+<select
+  value={newUser.roleId}
+  onChange={(e) => setNewUser({ ...newUser, roleId: e.target.value })}
+  className="border p-2 w-full mb-2 rounded"
+>
+  <option value="">Select Role</option>
+  {roles
+    .filter((role) => role.roleId !== 1 && role.roleId !== 3)
+    .map((role) => (
+      <option key={role.roleId} value={role.roleId}>
+        {role.roleName}
+      </option>
+    ))}
+</select>
 
   <button onClick={handleCreateUser} className="bg-blue-500 text-white p-2 w-full rounded">
     Create User
@@ -231,10 +234,11 @@ const DashboardSuperAdmin = () => {
         <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
           <div className="bg-white p-6 rounded shadow-lg">
             <h3 className="text-lg font-semibold mb-4">Edit User</h3>
-            <input type="text" value={editUser.firstName} onChange={(e) => setEditUser({ ...editManager, firstName: e.target.value })} className="border p-2 w-full mb-2 rounded" />
-            <input type="text" value={editUser.lastName} onChange={(e) => setEditUser({ ...editManager, lastName: e.target.value })} className="border p-2 w-full mb-2 rounded" />
-            <input type="email" value={editUser.email} onChange={(e) => setEditUser({ ...editManager, email: e.target.value })} className="border p-2 w-full mb-2 rounded" />
-            <button onClick={handleUpdateManager} className="bg-green-500 text-white p-2 w-full rounded">Update Manager</button>
+            <input type="text" value={editUser.firstName} onChange={(e) => setEditUser({ ...editUser, firstName: e.target.value })} className="border p-2 w-full mb-2 rounded" />
+            <input type="text" value={editUser.lastName} onChange={(e) => setEditUser({ ...editUser, lastName: e.target.value })} className="border p-2 w-full mb-2 rounded" />
+            <input type="text" value={editUser.mobileNo} onChange={(e) => setEditUser({ ...editUser, mobileNo: e.target.value })} className="border p-2 w-full mb-2 rounded" />
+            <input type="text" value={editUser.address} onChange={(e) => setEditUser({ ...editUser, address: e.target.value })} className="border p-2 w-full mb-2 rounded" />
+            <button onClick={() => handleUpdateUser(editUser.userId, editUser)} className="bg-green-500 text-white p-2 w-full rounded">Update Manager</button>
             <button onClick={() => setEditManager(null)} className="mt-2 text-red-500">Cancel</button>
           </div>
         </div>
@@ -245,7 +249,6 @@ const DashboardSuperAdmin = () => {
           {users.map((user) => (
             <li key={user.userId} className="flex justify-between p-2 border-b">
               {user.firstName} {' '} {user.lastName} - {user.email} - {user.mobileNo} - {user.address} - {user.roleName} - {user.dateOfBirth} - {user.accountType}
-              {/* <button onClick={() => handleDeleteUser(user.userId)} className="text-red-500">Delete</button> */}
             </li>
           ))}
         </ul>

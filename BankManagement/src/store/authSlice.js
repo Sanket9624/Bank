@@ -23,7 +23,6 @@ const authSlice = createSlice({
       state.roleId = user.RoleId;
       state.role = roleMapping[user.RoleId] || "customer";
 
-      // Store in localStorage for persistence
       localStorage.setItem("token", token);
       localStorage.setItem("roleId", user.RoleId);
       localStorage.setItem("role", state.role);
@@ -33,11 +32,7 @@ const authSlice = createSlice({
       state.token = null;
       state.role = null;
       state.roleId = null;
-
-      // Clear localStorage
-      localStorage.removeItem("token");
-      localStorage.removeItem("roleId");
-      localStorage.removeItem("role");
+      localStorage.clear();
     }
   }
 });

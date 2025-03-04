@@ -5,13 +5,15 @@ export const fetchTransactionHistory = async () => {
   return response.data;
 };
 
-export const fetchCustomTransactionHistory = async (startDate, endDate) => {
-  const response = await api.get(`/User/customTransactions`, {
-    params: { startDate, endDate },
-  });
+export const fetchCustomTransactionHistory = async (startDate, endDate, type) => {
+  const params = {};
+  if (startDate) params.startDate = startDate;
+  if (endDate) params.endDate = endDate;
+  if (type) params.type = type;
+
+  const response = await api.get("/User/customTransactions", { params });
   return response.data;
 };
-
 
 export const depositMoney = async (userId, amount) => {
   const response = await api.post("/User/deposit", { userId, amount });

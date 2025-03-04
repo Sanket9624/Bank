@@ -32,11 +32,6 @@ export const getAllUsers = async () => {
   return response.data;
 };
 
-export const updateManager = async (userId, userData) => {
-  const response = await api.put(`/admin/bank-managers/${userId}`, userData);
-  return response.data;
-};
-
 export const updateUser = async (userId, userData) => {
   const response = await api.put(`/admin/users/${userId}`, userData);
   return response.data;
