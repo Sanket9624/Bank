@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Table, Button, Modal, Form, Input, DatePicker, message, Popconfirm, Select } from "antd";
-import { getAllBankManagers, createUser, updateUser, deleteUser, getAllRoles , verifyOtp } from "../../services/adminService";
+import { getAllBankManagers, createUser, updateUser, deleteUser, getAllRoles } from "../../services/adminService";
+import { verifyOtp } from "../../services/authService";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 
 const { Option } = Select;
 
@@ -11,10 +13,11 @@ const ManagerManagement = () => {
   const [roles, setRoles] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingManager, setEditingManager] = useState(null);
-  const [isOtpModalVisible, setIsOtpModalVisible] = useState(false);
-  const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
   const [form] = Form.useForm();
+  const [otp, setOtp] = useState("");
+  const [emailForOtp, setEmailForOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchManagers();
@@ -41,33 +44,20 @@ const ManagerManagement = () => {
 
   const handleCreateManager = async (values) => {
     try {
+      // Create the manager in the backend
       const response = await createUser(values, token);
-      console.log("hello" , response);
-      
-        setEmail(values.email);
-        console.log(response);
-        
-        message.success("Otp Sent For Email Verification");
-        setIsOtpModalVisible(true);
+      if (response.isSuccess) {
+        message.success("Manager created successfully. OTP sent to email.");
+        setEmailForOtp(values.email); // Save the email for OTP verification
+        setOtpSent(true); // Mark OTP as sent
+        fetchManagers();
         setIsModalOpen(false);
         form.resetFields();
+      } else {
+        message.error("Failed to create manager");
+      }
     } catch (error) {
       message.error("Failed to create manager");
-    }
-  };
-
-  const handleOtpVerification = async () => {
-    try {
-      const response = await verifyOtp({ email, otp });
-      console.log("OTP Response:", response);
-
-        message.success("Manager Created Succesfully.");
-        setIsOtpModalVisible(false);
-        fetchManagers();
-        form.resetFields(); 
-    } catch (error) {
-      console.error("OTP Verification failed", error);
-      message.error("Invalid OTP. Please try again.");
     }
   };
 
@@ -101,8 +91,27 @@ const ManagerManagement = () => {
       lastName: manager.lastName,
       mobileNo: manager.mobileNo,
       address: manager.address,
+      email: manager.email,
+      password: manager.password,
+      dateOfBirth: manager.dateOfBirth,
+      roleId: manager.roleId,
     });
     setIsModalOpen(true);
+  };
+
+  const handleOtpSubmit = async () => {
+    try {
+      const response = await verifyOtp({ email: emailForOtp, otp });
+      if (response.isSuccess) {
+        message.success("OTP Verified!");
+        setOtpSent(false); // Reset OTP state
+        fetchManagers(); // Fetch managers again to reflect verified status
+      } else {
+        message.error("Invalid OTP");
+      }
+    } catch (error) {
+      message.error("OTP verification failed");
+    }
   };
 
   const columns = [
@@ -134,6 +143,7 @@ const ManagerManagement = () => {
       </Button>
       <Table dataSource={managers} columns={columns} rowKey="userId" />
 
+      {/* Manager Creation Modal */}
       <Modal
         title={editingManager ? "Edit Manager" : "Create Manager"}
         open={isModalOpen}
@@ -161,45 +171,47 @@ const ManagerManagement = () => {
           <Form.Item name="address" label="Address" rules={[{ required: true, message: "Please enter address" }]}> 
             <Input />
           </Form.Item>
-          {!editingManager && (
-            <Form.Item name="email" label="Email" rules={[{ required: true, message: "Please enter email" }]}> 
-              <Input />
-            </Form.Item>
-          )}
-          {!editingManager && (
-            <Form.Item name="password" label="Password" rules={[{ required: true, message: "Please enter password" }]}> 
-              <Input.Password />
-            </Form.Item>
-          )}
-          {!editingManager && (
-            <Form.Item name="dateOfBirth" label="Date of Birth" rules={[{ required: true, message: "Please select date of birth" }]}> 
-              <DatePicker style={{ width: "100%" }} />
-            </Form.Item>
-          )}
-          {!editingManager && (
-            <Form.Item name="roleId" label="Role" rules={[{ required: true, message: "Please select role" }]}> 
-              <Select>
-                {roles.map((role) => (
-                  <Option key={role.roleId} value={role.roleId}>{role.roleName}</Option>
-                ))}
-              </Select>
-            </Form.Item>
-          )}
+          <Form.Item name="email" label="Email" rules={[{ required: true, message: "Please enter email" }]}> 
+            <Input />
+          </Form.Item>
+          <Form.Item name="password" label="Password" rules={[{ required: true, message: "Please enter password" }]}> 
+            <Input.Password />
+          </Form.Item>
+          <Form.Item name="dateOfBirth" label="Date of Birth" rules={[{ required: true, message: "Please select date of birth" }]}> 
+            <DatePicker style={{ width: "100%" }} />
+          </Form.Item>
+          <Form.Item name="roleId" label="Role" rules={[{ required: true, message: "Please select role" }]}> 
+            <Select>
+              {roles.map((role) => (
+                <Option key={role.roleId} value={role.roleId}>{role.roleName}</Option>
+              ))}
+            </Select>
+          </Form.Item>
           <Button type="primary" htmlType="submit">
             {editingManager ? "Update Manager" : "Create Manager"}
           </Button>
         </Form>
       </Modal>
 
-      <Modal
-        title="Verify OTP"
-        open={isOtpModalVisible}
-        onOk={handleOtpVerification}
-        onCancel={() => setIsOtpModalVisible(false)}
-        okText="Verify OTP"
-      >
-        <Input placeholder="Enter OTP" value={otp} onChange={(e) => setOtp(e.target.value)} />
-      </Modal>
+      {/* OTP Verification Modal */}
+      {otpSent && (
+        <Modal
+          title="Verify OTP"
+          open={otpSent}
+          onCancel={() => setOtpSent(false)}
+          footer={null}
+        >
+          <Form onFinish={handleOtpSubmit}>
+            <Form.Item name="otp" label="OTP" rules={[{ required: true, message: "Please enter the OTP" }]}>
+              <Input
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+              />
+            </Form.Item>
+            <Button type="primary" htmlType="submit">Verify OTP</Button>
+          </Form>
+        </Modal>
+      )}
     </div>
   );
 };

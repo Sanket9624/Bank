@@ -28,7 +28,7 @@ const TransactionManagement = () => {
       const data = await getTransactions(filters, token);
       setTransactions(data);
       message.success("Transactions filtered successfully.");
-      
+
     } catch (error) {
       message.error("Failed to fetch transactions");
     }
@@ -74,7 +74,9 @@ const TransactionManagement = () => {
       <Table dataSource={transactions} columns={[
         { title: "Sender Name", dataIndex: "senderName", key: "senderName" },
         { title: "Receiver Name", dataIndex: "receiverName", key: "receiverName" },
-        { title: "Amount", dataIndex: "amount", key: "amount" },
+        { title: "Amount", dataIndex: "amount", key: "amount" , render: (amount,record) => (
+          <span style={{ color: record.type === "Deposit" ? "green" : record.type === "Withdraw" ? "red" : "blue" }}>{`$${amount}`}</span>
+        ) },
         { title: "Type", dataIndex: "type", key: "type" },
         { title: "Date", dataIndex: "transactionDate", key: "transactionDate" },
       ]} rowKey="transactionId" style={{ marginTop: "20px" }} />

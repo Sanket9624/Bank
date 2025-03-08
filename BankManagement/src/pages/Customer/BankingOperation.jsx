@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Card, Form, Input, Button, message, Row, Col } from "antd";
-import { DollarOutlined, SendOutlined } from "@ant-design/icons";
+import { ArrowDownOutlined, ArrowUpOutlined, SwapOutlined } from "@ant-design/icons";
 import { depositMoney, withdrawMoney, transferMoney } from "../../services/userService";
 import "@ant-design/v5-patch-for-react-19";
 import { useSelector } from "react-redux";
@@ -34,7 +34,7 @@ const BankingOperations = () => {
 
   const handleTransfer = async () => {
     try {
-      await transferMoney(token, receiver, transferAmount);
+      await transferMoney(receiver ,transferAmount);
       message.success("Transfer successful");
       setTransferAmount("");
       setReceiver("");
@@ -44,22 +44,17 @@ const BankingOperations = () => {
   };
 
   return (
-    <div className="p-6">
-      <Row gutter={[16, 16]}>
+    <div className="p-6 min-h-screen">
+      <Row gutter={[16, 16]} justify="center">
         <Col xs={24} sm={12} lg={8}>
-          <Card title="Deposit Funds" bordered>
+          <Card title={<span>Deposit Funds <ArrowDownOutlined className="text-green-500" /></span>} bordered>
             <Form layout="vertical">
               <Form.Item label="Amount" required>
-                <Input
-                  prefix={<DollarOutlined />}
-                  placeholder="Enter Amount"
-                  value={depositAmount}
-                  onChange={(e) => setDepositAmount(e.target.value)}
-                />
+                <Input placeholder="₹ Enter amount" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} />
               </Form.Item>
               <Form.Item>
-                <Button type="primary" onClick={handleDeposit} block>
-                  Deposit
+                <Button type="primary" className="bg-green-500" block onClick={handleDeposit}>
+                  ✅ Deposit
                 </Button>
               </Form.Item>
             </Form>
@@ -67,19 +62,14 @@ const BankingOperations = () => {
         </Col>
 
         <Col xs={24} sm={12} lg={8}>
-          <Card title="Withdraw Funds" bordered>
+          <Card title={<span>Withdraw Funds <ArrowUpOutlined className="text-red-500" /></span>} bordered>
             <Form layout="vertical">
               <Form.Item label="Amount" required>
-                <Input
-                  prefix={<DollarOutlined />}
-                  placeholder="Enter Amount"
-                  value={withdrawAmount}
-                  onChange={(e) => setWithdrawAmount(e.target.value)}
-                />
+                <Input placeholder="₹ Enter amount" value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)} />
               </Form.Item>
               <Form.Item>
-                <Button danger onClick={handleWithdraw} block>
-                  Withdraw
+                <Button danger block onClick={handleWithdraw}>
+                  ❌ Withdraw
                 </Button>
               </Form.Item>
             </Form>
@@ -87,26 +77,17 @@ const BankingOperations = () => {
         </Col>
 
         <Col xs={24} sm={24} lg={8}>
-          <Card title="Transfer Money" bordered>
+          <Card title={<span>Transfer Money <SwapOutlined className="text-blue-500" /></span>} bordered>
             <Form layout="vertical">
-              <Form.Item label="Receiver Account Number" required>
-                <Input
-                  placeholder="Receiver Account Number"
-                  value={receiver}
-                  onChange={(e) => setReceiver(e.target.value)}
-                />
+              <Form.Item label="Recipient Account" required>
+                <Input placeholder="Enter account number" value={receiver} onChange={(e) => setReceiver(e.target.value)} />
               </Form.Item>
               <Form.Item label="Amount" required>
-                <Input
-                  prefix={<SendOutlined />}
-                  placeholder="Enter Amount"
-                  value={transferAmount}
-                  onChange={(e) => setTransferAmount(e.target.value)}
-                />
+                <Input placeholder="₹ Enter amount" value={transferAmount} onChange={(e) => setTransferAmount(e.target.value)} />
               </Form.Item>
               <Form.Item>
-                <Button type="primary" onClick={handleTransfer} block>
-                  Transfer
+                <Button type="primary" className="bg-blue-500" block onClick={handleTransfer}>
+                  🚀 Transfer
                 </Button>
               </Form.Item>
             </Form>

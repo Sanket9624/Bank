@@ -2,16 +2,17 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import { useSelector } from "react-redux";
 import Login from "../pages/Auth/Login";
 import Register from "../pages/Auth/Register";
+import ForgotPassword from "../pages/Auth/ForgotPassword";
+import VerifyOtp from "../pages/Auth/VerifyOtp"; 
+import ResetPassword from "../pages/Auth/ResetPassword";
 import Dashboard from "../pages/Dashboard/Dashboard";
 import BankingOperations from "../pages/Customer/BankingOperation";
 import TransactionHistory from "../pages/Customer/TransactionHistory";
 import Sidebar from "../Components/SideBar";
-// import ProtectedRoute from "./ProtectedRoute";
 import Navbar from "../Components/Navbar";
 import RoleManagement from "../pages/Admin/RoleManagement";
 import UserManagement from "../pages/Admin/UserManagement";
 import ManagerManagement from "../pages/Admin/ManagerManagement";
-// import DashboardBankManager from "../pages/Dashboard/DashboardBankManager";
 import TransactionManagement from "../pages/Admin/TransactionManagement";
 import UserDetails from "../pages/Admin/UserDetails";
 
@@ -27,9 +28,12 @@ const AppRouter = () => {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/verify-otp" element={<VerifyOtp />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             {token ? (
               <>
-                <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/banking-operations" element={<BankingOperations />} />
                 <Route path="/transaction-history" element={<TransactionHistory />} />
                 <Route path="/role-management" element={<RoleManagement />} />

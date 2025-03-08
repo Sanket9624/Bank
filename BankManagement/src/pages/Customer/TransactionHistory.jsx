@@ -70,7 +70,7 @@ const TransactionHistory = () => {
       title: "Index",
       dataIndex: "index",
       key: "index",
-      render: (_, __, index) => index + 1,
+      render: (index) => index + 1,
     },
     {
       title: "Type",

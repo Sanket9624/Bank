@@ -21,6 +21,10 @@ export const createUser = async (userData) => {
   return response.data;
 };
 
+export const verifyOtp = async (data) => {
+  const response = await api.post("/admin/verify-otp", data);
+  return response.data;
+}
 export const getAllBankManagers = async () => {
   const response = await api.get("/admin/bank-managers");
   return response.data;
