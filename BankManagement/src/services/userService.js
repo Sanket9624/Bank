@@ -1,31 +1,35 @@
 import api from "./api";
+import { handleApiCall } from "./apiHelper";
 
-export const fetchTransactionHistory = async () => {
-  const response = await api.get("/User/transactions");
-  return response.data;
+export const fetchTransactionHistory = async () =>
+  handleApiCall(api.get("/User/transactions"));
+
+export const fetchCustomTransactionHistory = async (
+  startDate,
+  endDate,
+  type,
+  status,
+) => {
+  const params = {
+    ...(startDate && { startDate }),
+    ...(endDate && { endDate }),
+    ...(type && { type }),
+    ...(status && { status }),
+  };
+  return handleApiCall(api.get("/User/customTransactions", { params }));
 };
 
-export const fetchCustomTransactionHistory = async (startDate, endDate, type) => {
-  const params = {};
-  if (startDate) params.startDate = startDate;
-  if (endDate) params.endDate = endDate;
-  if (type) params.type = type;
+export const depositMoney = async (userId, amount, description = " ") =>
+  handleApiCall(api.post("/User/deposit", { userId, amount, description }));
 
-  const response = await api.get("/User/customTransactions", { params });
-  return response.data;
-};
+export const withdrawMoney = async (userId, amount, description = " ") =>
+  handleApiCall(api.post("/User/withdraw", { userId, amount, description }));
 
-export const depositMoney = async (userId, amount) => {
-  const response = await api.post("/User/deposit", { userId, amount });
-  return response.data;
-};
-
-export const withdrawMoney = async (userId, amount) => {
-  const response = await api.post("/User/withdraw", { userId, amount });
-  return response.data;
-};
-
-export const transferMoney = async (receiverAccountNumber, amount) => {
-  const response = await api.post("/User/transfer", { receiverAccountNumber, amount });
-  return response.data;
-};
+export const transferMoney = async (
+  receiverAccountNumber,
+  amount,
+  description = " ",
+) =>
+  handleApiCall(
+    api.post("/User/transfer", { receiverAccountNumber, amount, description }),
+  );

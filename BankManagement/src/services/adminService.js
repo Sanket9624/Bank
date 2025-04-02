@@ -1,47 +1,42 @@
 import api from "./api";
+import { handleApiCall } from "./apiHelper";
 
-export const createRole = async (roleName) => {
-  const response = await api.post("/admin/roles", { roleName });
-  return response.data;
-};
+export const createRole = async (roleName) =>
+  handleApiCall(api.post("/admin/roles", { roleName }));
 
-export const getAllRoles = async () => {
-  const response = await api.get("/admin/roles");
-  return response.data;
-};
+export const getAllRoles = async () => handleApiCall(api.get("/admin/roles"));
 
-export const deleteRole = async (roleId) => {
-  const response = await api.delete(`/admin/roles/${roleId}`);
-  return response.data;
-};
+export const deleteRole = async (roleId) =>
+  handleApiCall(api.delete(`/admin/roles/${roleId}`));
 
-// 🏦 Bank Manager Management
-export const createUser = async (userData) => {
-  const response = await api.post("/admin/bank-managers", userData);
-  return response.data;
-};
+export const createUser = async (userData) =>
+  handleApiCall(api.post("/admin/managers", userData));
 
-export const verifyOtp = async (data) => {
-  const response = await api.post("/admin/verify-otp", data);
-  return response.data;
-}
-export const getAllBankManagers = async () => {
-  const response = await api.get("/admin/bank-managers");
-  return response.data;
-};
+export const verifyOtp = async (data) =>
+  handleApiCall(api.post("/admin/verify-otp", data));
 
-// 👥 User Management
-export const getAllUsers = async () => {
-  const response = await api.get("/admin/users");
-  return response.data;
-};
+export const getAllBankManagers = async () =>
+  handleApiCall(api.get("/admin/managers"));
 
-export const updateUser = async (userId, userData) => {
-  const response = await api.put(`/admin/users/${userId}`, userData);
-  return response.data;
-};
+export const getAllUsers = async () => handleApiCall(api.get("/admin/users"));
 
-export const deleteUser = async (userId) => {
-  const response = await api.delete(`/admin/users/${userId}`);
-  return response.data;
-};
+export const getUsersWithStatus = async () =>
+  handleApiCall(api.get("/admin/users-status"));
+
+export const approveAccount = async (
+  userId,
+  isApproved,
+  rejectedReason = " ",
+) =>
+  handleApiCall(
+    api.post(`/admin/approve-account?rejectedReason=${rejectedReason}`, {
+      userId,
+      isApproved,
+    }),
+  );
+
+export const updateUser = async (userId, userData) =>
+  handleApiCall(api.put(`/admin/users/${userId}`, userData));
+
+export const deleteUser = async (userId) =>
+  handleApiCall(api.delete(`/admin/users/${userId}`));

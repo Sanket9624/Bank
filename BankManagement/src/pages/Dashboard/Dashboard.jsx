@@ -1,14 +1,32 @@
 import React, { useEffect, useState } from "react";
-import { Card, Typography, message, Alert, Table, Switch } from "antd";
-import { UserOutlined } from "@ant-design/icons";
-import { fetchUserDetails, toggleTwoFactor,fetchTwoFactorStatus } from "../../services/authService";
-import { bankSummary } from "../../services/bankManagerService";
+import {
+  Card,
+  Typography,
+  message,
+  Table,
+  Switch,
+  Spin,
+  Row,
+  Col,
+  Tag,
+} from "antd";
+import {
+  UserOutlined,
+  CrownOutlined,
+  BankOutlined,
+  MailOutlined,
+} from "@ant-design/icons";
+import {
+  fetchUserDetails,
+  toggleTwoFactor,
+  fetchTwoFactorStatus,
+} from "../../services/authService";
+import { bankSummary, getAllAccounts } from "../../services/bankManagerService";
 import { fetchTransactionHistory } from "../../services/userService";
-import '@ant-design/v5-patch-for-react-19';
 import { useSelector } from "react-redux";
 import "antd/dist/reset.css";
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 const Dashboard = () => {
   const { token } = useSelector((state) => state.auth);
@@ -16,168 +34,290 @@ const Dashboard = () => {
   const [summary, setSummary] = useState(null);
   const [recentTransactions, setRecentTransactions] = useState([]);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [totalAccounts, setTotalAccounts] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadUserDetails = async () => {
+    const loadDashboardData = async () => {
+      setLoading(true);
       try {
-        const user = await fetchUserDetails(token);
+        const [user, twoFactorStatus] = await Promise.all([
+          fetchUserDetails(token),
+          fetchTwoFactorStatus(),
+        ]);
         setUserData(user);
-        await fetchAndSetTwoFactorStatus(); // Fetch 2FA status from API only
+        setTwoFactorEnabled(twoFactorStatus?.twoFactorEnabled || false);
+
         if (user.roleName === "BankManager" || user.roleName === "SuperAdmin") {
-          fetchBankSummary();
+          const [summaryData, accountsData] = await Promise.all([
+            bankSummary(),
+            getAllAccounts(),
+          ]);
+          setSummary(summaryData);
+          setTotalAccounts(accountsData?.totalAccounts ?? 0);
         }
+
         if (user.roleName === "Customer") {
-          fetchRecentTransactions();
+          const transactions = await fetchTransactionHistory();
+          setRecentTransactions(transactions.slice(0, 5));
         }
       } catch (error) {
-        message.error("Failed to fetch user details.");
+        message.error("Failed to load dashboard data.");
+      } finally {
+        setLoading(false);
       }
     };
-
-    const fetchBankSummary = async () => {
-      try {
-        const data = await bankSummary();
-        setSummary(data);
-      } catch (error) {
-        message.error("Failed to fetch bank summary.");
-      }
-    };
-
-    const fetchRecentTransactions = async () => {
-      try {
-        const data = await fetchTransactionHistory();
-        setRecentTransactions(data.slice(0, 5));
-      } catch (error) {
-        message.error("Failed to fetch recent transactions.");
-      }
-    };
-
-    const fetchAndSetTwoFactorStatus = async () => {
-      try {
-        const response = await fetchTwoFactorStatus();
-        setTwoFactorEnabled(response.twoFactorEnabled); // Use API response only
-      } catch (error) {
-        message.error("Failed to fetch 2FA status.");
-      }
-    };
-
-    loadUserDetails();
+    loadDashboardData();
   }, [token]);
 
-  const handleToggleTwoFactor = async (checked) => {
-    try {
-      const response = await toggleTwoFactor({ TwoFactorEnabled: checked });
-      message.success(response.message);
-      await fetchAndSetTwoFactorStatus(); // Re-fetch 2FA status
-    } catch (error) {
-      message.error("Failed to update 2FA status.");
-    }
-  };
-  
-
-  const columns = [
-    {
-      title: "Type",
-      dataIndex: "type",
-      key: "type",
-    },
-    {
-      title: "Amount (₹)",
-      dataIndex: "amount",
-      key: "amount",
-      render: (amount, record) => (
-        <strong style={{ color: record.type === "Deposit" ? "green" : "red" }}>
-          ₹{amount}
-        </strong>
-      ),
-    },
-    {
-      title: "Date",
-      dataIndex: "transactionDate",
-      key: "transactionDate",
-      render: (date) => new Date(date).toLocaleString(),
-    },
-  ];
-
   return (
-    <div style={{ padding: "20px" }}>
-      <Title level={2} style={{ textAlign: "center", marginBottom: "20px" }}>
+    <div style={{ padding: "30px", maxWidth: "1200px", margin: "auto" }}>
+      <Title
+        level={2}
+        style={{ textAlign: "left", fontWeight: "bold", marginBottom: "20px" }}
+      >
         Dashboard
       </Title>
-
-      {userData ? (
-        <Card title="User Information" style={{ marginBottom: "20px" }}>
-          <Card.Grid style={{ width: "100%" }}>
-            <p>
-              <strong>Full Name:</strong> {userData.fullName}
-            </p>
-            <p>
-              <strong>Email:</strong> {userData.email}
-            </p>
-            <p>
-              <strong>Role:</strong> {userData.roleName}
-            </p>
-            <p>
-  <strong>Two-Factor Authentication:</strong>{" "}
-  <Switch
-    checked={twoFactorEnabled}
-    onChange={handleToggleTwoFactor}
-  />
-</p>
-
-          </Card.Grid>
-        </Card>
+      {loading ? (
+        <Spin
+          size="large"
+          style={{ display: "block", textAlign: "center", marginTop: 50 }}
+        />
       ) : (
-        <Alert message="User not found" type="error" showIcon />
-      )}
+        <>
+          <Card
+            style={{
+              padding: "20px",
+              borderRadius: "12px",
+              marginBottom: "20px",
+              background: "#f8f9fa",
+            }}
+          >
+            <Title level={4} style={{ marginBottom: "20px" }}>
+              Personal Information
+            </Title>
+            <Row gutter={[16, 16]}>
+              <Col xs={24} md={8}>
+                <Card style={{ borderRadius: "10px", textAlign: "center" }}>
+                  <UserOutlined
+                    style={{ fontSize: "24px", color: "#1890ff" }}
+                  />
+                  <Title level={5}>Full Name</Title>
+                  <Text strong>{userData?.fullName}</Text>
+                </Card>
+              </Col>
+              <Col xs={24} md={8}>
+                <Card style={{ borderRadius: "10px", textAlign: "center" }}>
+                  <MailOutlined
+                    style={{ fontSize: "24px", color: "#52c41a" }}
+                  />
+                  <Title level={5}>Email Address</Title>
+                  <Text strong>{userData?.email}</Text>
+                </Card>
+              </Col>
+              <Col xs={24} md={8}>
+                <Card style={{ borderRadius: "10px", textAlign: "center" }}>
+                  {userData?.roleName === "Customer" && (
+                    <UserOutlined
+                      style={{ fontSize: "24px", color: "#1890ff" }}
+                    />
+                  )}
+                  {userData?.roleName === "BankManager" && (
+                    <BankOutlined
+                      style={{ fontSize: "24px", color: "green" }}
+                    />
+                  )}
+                  {userData?.roleName === "SuperAdmin" && (
+                    <CrownOutlined
+                      style={{ fontSize: "24px", color: "gold" }}
+                    />
+                  )}
+                  <Title level={5}>Role</Title>
+                  <Text strong>{userData?.roleName}</Text>
+                </Card>
+              </Col>
+            </Row>
+          </Card>
 
-      {userData?.account && (
-        <Card title="Account Details" style={{ marginBottom: "20px" }}>
-          <Card.Grid style={{ width: "100%" }}>
-            <p>
-              <strong>Account Number:</strong> {userData.account.accountNumber}
-            </p>
-            <p>
-              <strong>Balance:</strong> ₹{userData.account.balance}
-            </p>
-            <p>
-              <strong>Account Type:</strong> {userData.account.accountType}
-            </p>
-          </Card.Grid>
-        </Card>
-      )}
+          {(userData?.roleName === "BankManager" ||
+            userData?.roleName === "SuperAdmin") &&
+            summary && (
+              <Row gutter={[16, 16]} justify="center">
+                {/* First Row - 4 Blocks */}
+                <Col xs={24} sm={12} md={6}>
+                  <Card
+                    hoverable
+                    style={{
+                      textAlign: "center",
+                      borderRadius: "10px",
+                      background: "#f0f5ff",
+                    }}
+                  >
+                    <Title level={4} style={{ color: "#0050b3" }}>
+                      {totalAccounts}
+                    </Title>
+                    <Text strong>Total Accounts</Text>
+                  </Card>
+                </Col>
+                <Col xs={24} sm={12} md={6}>
+                  <Card
+                    hoverable
+                    style={{
+                      textAlign: "center",
+                      borderRadius: "10px",
+                      background: "#f9f0ff",
+                    }}
+                  >
+                    <Title level={4} style={{ color: "#531dab" }}>
+                      {summary?.totalTransactions}
+                    </Title>
+                    <Text strong>Total Transactions</Text>
+                  </Card>
+                </Col>
+                <Col xs={24} sm={12} md={6}>
+                  <Card
+                    hoverable
+                    style={{
+                      textAlign: "center",
+                      borderRadius: "10px",
+                      background: "#f6ffed",
+                    }}
+                  >
+                    <Title level={4} style={{ color: "green" }}>
+                      ₹{summary?.totalBankBalance?.toFixed(2) ?? "N/A"}
+                    </Title>
+                    <Text strong>Total Balance</Text>
+                  </Card>
+                </Col>
+                <Col xs={24} sm={12} md={6}>
+                  <Card
+                    hoverable
+                    style={{
+                      textAlign: "center",
+                      borderRadius: "10px",
+                      background: "#e6fffb",
+                    }}
+                  >
+                    <Title level={4} style={{ color: "green" }}>
+                      ₹{summary?.totalDepositedMoney?.toFixed(2) ?? "N/A"}
+                    </Title>
+                    <Text strong>Total Deposits</Text>
+                  </Card>
+                </Col>
 
-      {summary && (userData?.roleName === "BankManager" || userData?.roleName === "SuperAdmin") && (
-        <Card title="Bank Summary" style={{ marginBottom: "20px" }}>
-          <Card.Grid style={{ width: "100%" }}>
-            <p>
-              <strong>Total Bank Balance:</strong> ₹{summary.totalBankBalance}
-            </p>
-            <p>
-              <strong>Total Deposits:</strong> ₹{summary.totalDepositedMoney}
-            </p>
-            <p>
-              <strong>Total Withdrawals:</strong> ₹{summary.totalWithdrawnMoney}
-            </p>
-            <p>
-              <strong>Total Transactions:</strong> {summary.totalTransactions}
-            </p>
-          </Card.Grid>
-        </Card>
-      )}
+                {/* Second Row - Withdraw Block Centered */}
+                <Col xs={24} sm={12} md={6} style={{ marginTop: "10px" }}>
+                  <Card
+                    hoverable
+                    style={{
+                      textAlign: "center",
+                      borderRadius: "10px",
+                      background: "#fff1f0",
+                    }}
+                  >
+                    <Title level={4} style={{ color: "red" }}>
+                      ₹{summary?.totalWithdrawnMoney?.toFixed(2) ?? "N/A"}
+                    </Title>
+                    <Text strong>Total Withdrawals</Text>
+                  </Card>
+                </Col>
+              </Row>
+            )}
 
-      {userData?.roleName === "Customer" && recentTransactions.length > 0 && (
-        <Card title="Recent Transactions">
-          <Table
-            columns={columns}
-            dataSource={recentTransactions.map((data, index) => ({
-              ...data,
-              key: index,
-            }))}
-            pagination={false}
-            scroll={{ x: true }}
-          />
-        </Card>
+          {userData?.roleName === "Customer" && userData?.account && (
+            <Row gutter={[16, 16]}>
+              <Col xs={24} sm={12} md={8}>
+                <Card style={{ textAlign: "center", borderRadius: "10px" }}>
+                  <Text strong>Account Number</Text>
+                  <Title level={4}>{userData.account.accountNumber}</Title>
+                </Card>
+              </Col>
+              <Col xs={24} sm={12} md={8}>
+                <Card style={{ textAlign: "center", borderRadius: "10px" }}>
+                  <Text strong>Balance</Text>
+                  <Title level={3} style={{ color: "green" }}>
+                    ₹{userData.account.balance.toFixed(2)}
+                  </Title>
+                </Card>
+              </Col>
+              <Col xs={24} sm={12} md={8}>
+                <Card style={{ textAlign: "center", borderRadius: "10px" }}>
+                  <Text strong>Account Type</Text>
+                  <Title level={4}>{userData.account.accountType}</Title>
+                </Card>
+              </Col>
+            </Row>
+          )}
+
+          {userData?.roleName === "Customer" &&
+            recentTransactions.length > 0 && (
+              <Card
+                title="Recent Transactions"
+                style={{ marginTop: "20px", borderRadius: "10px" }}
+              >
+                <Table
+                  columns={[
+                    {
+                      title: "Type",
+                      dataIndex: "type",
+                      key: "type",
+                      render: (text) => {
+                        let color =
+                          text === "Deposit"
+                            ? "green"
+                            : text === "Withdraw"
+                              ? "red"
+                              : "blue";
+                        return (
+                          <Tag
+                            color={color}
+                            style={{ fontWeight: "bold", fontSize: "14px" }}
+                          >
+                            {text}
+                          </Tag>
+                        );
+                      },
+                    },
+                    {
+                      title: "Amount (₹)",
+                      dataIndex: "amount",
+                      key: "amount",
+                      render: (amount, record) => {
+                        let color =
+                          record.type === "Deposit"
+                            ? "green"
+                            : record.type === "Withdraw"
+                              ? "red"
+                              : "blue";
+                        return (
+                          <span style={{ color, fontWeight: "bold" }}>
+                            ₹{amount.toFixed(2)}
+                          </span>
+                        );
+                      },
+                    },
+                    {
+                      title: "Date",
+                      dataIndex: "transactionDate",
+                      key: "transactionDate",
+                      render: (date) => (
+                        <span style={{ fontSize: "13px", color: "#555" }}>
+                          {new Date(date).toLocaleDateString()}
+                        </span>
+                      ),
+                    },
+                  ]}
+                  dataSource={recentTransactions.map((data, index) => ({
+                    ...data,
+                    key: index,
+                  }))}
+                  pagination={{ pageSize: 5 }}
+                  bordered
+                  style={{ borderRadius: "10px" }}
+                />
+              </Card>
+            )}
+        </>
       )}
     </div>
   );

@@ -1,2 +1,5 @@
 @import "tailwindcss";
-
+.dark {
+    background-color: #1a202c; /* Equivalent to bg-gray-900 */
+    color: #ffffff; /* Equivalent to text-white */
+  }

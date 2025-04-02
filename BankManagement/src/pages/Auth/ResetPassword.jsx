@@ -9,18 +9,17 @@ const ResetPassword = () => {
   const { handleSubmit, setValue } = useForm();
   const navigate = useNavigate();
   const location = useLocation();
-    const [searchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const email = new URLSearchParams(location.search).get("email");
   const otp = searchParams.get("otp");
 
   console.log(otp);
-  
 
   const onSubmit = async (data) => {
     try {
-        console.log(otp);
-        
-      await resetPassword({ email, newPassword: data.password ,otp:otp});
+      console.log(otp);
+
+      await resetPassword({ email, newPassword: data.password, otp: otp });
       message.success("Password reset successfully!");
       navigate("/login");
     } catch (error) {
@@ -37,8 +36,18 @@ const ResetPassword = () => {
       <div className="bg-white shadow-lg rounded-lg p-8 w-full max-w-md">
         <h2 className="text-center text-2xl font-bold mb-6">Reset Password</h2>
         <Form layout="vertical" onFinish={handleSubmit(onSubmit)}>
-          <Form.Item label="New Password" name="password" rules={[{ required: true, message: "Please enter your new password" }]}> 
-            <Input.Password placeholder="New Password" name="password" onChange={handleInputChange} />
+          <Form.Item
+            label="New Password"
+            name="password"
+            rules={[
+              { required: true, message: "Please enter your new password" },
+            ]}
+          >
+            <Input.Password
+              placeholder="New Password"
+              name="password"
+              onChange={handleInputChange}
+            />
           </Form.Item>
           <Button type="primary" htmlType="submit" className="w-full">
             Reset Password

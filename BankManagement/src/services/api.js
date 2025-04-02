@@ -1,36 +1,42 @@
 import axios from "axios";
-import store from "../store"; 
+import store from "../store";
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "https://localhost:7032/api";
 
 const api = axios.create({
-  baseURL: "https://localhost:7032/api",
+  baseURL: API_BASE_URL,
   headers: { "Content-Type": "application/json" },
 });
 
+// Request Interceptor for Auth Token
 api.interceptors.request.use(
   (config) => {
-    const state = store.getState(); 
-    const token = state.auth.token; 
-    
-    // Add token if available and endpoint requires it
+    const token = store.getState().auth.token;
     if (token && !config.url.includes("/users/register")) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
+// Response Interceptor for Error Handling
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
-      alert("Failed to fetch user details. Please log in again.");
-      store.dispatch({ type: "auth/logout" }); // Dispatch logout action
-      window.location.href = "/login"; // Redirect to login page
+    if (error.response) {
+      const { status } = error.response;
+
+      if (status === 401 && !error.config.url.includes("/users/login")) {
+        store.dispatch({ type: "auth/logout" });
+        window.location.href = "/login";
+      }
     }
-    return Promise.reject(error);
-  }
+    return Promise.reject(
+      error?.response?.data || { message: "Something went wrong" },
+    );
+  },
 );
 
 export default api;
